@@ -16,10 +16,8 @@ import vn.com.gsoft.consumer.repository.GiaoDichHangHoaRepository;
 import vn.com.gsoft.consumer.service.GiaoDichHangHoaService;
 import vn.com.gsoft.consumer.service.RedisListService;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Log4j2
@@ -68,26 +66,31 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                     }
                     gd.setSoLuong(x.getSoLuong().multiply(item.getHeSo()));
                 }
-                gd.setNgayGiaoDich(x.getNgayGiaoDich());
-                gd.setThuocId(x.getThuocId());
-                gd.setLoaiGiaoDich(x.getNoteType());
-                gd.setMaCoSo(x.getMaCoSo());
-                gd.setDongBang(x.getNgayGiaoDich().before(dateArchive.getTime()));
-                gd.setTenDonVi(item.getTenDonViLe());
-                gd.setThuocIdCs(x.getThuocIDCoSo());
-                gd.setNhomDuocLyId(item.getNhomDuocLyId());
-                gd.setNhomHoatChatId(item.getNhomHoatChatId());
-                gd.setNhomNganhHangId(item.getNhomNganhHangId());
-                gd.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
-                gd.setTenThuoc(item.getTenThuoc());
-                if(x.getIsModified()){
-                    //kiểm tra phiếu đó và update
-                    var gddb = giaoDichHangHoaRepository.findAllByMaPhieuChiTiet(x.getMaPhieuChiTiet());
-                    if(gddb != null){
-                        gd.setId(gddb.getId());
+                try{
+                    SimpleDateFormat formatter=new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+                    Date ngayGd =formatter.parse(x.getNgayGiaoDich());
+                    gd.setNgayGiaoDich(ngayGd);
+                    gd.setThuocId(x.getThuocId());
+                    gd.setLoaiGiaoDich(x.getNoteType());
+                    gd.setMaCoSo(x.getMaCoSo());
+                    gd.setDongBang(ngayGd.before(dateArchive.getTime()));
+                    gd.setTenDonVi(item.getTenDonViLe());
+                    gd.setThuocIdCs(x.getThuocIDCoSo());
+                    gd.setNhomDuocLyId(item.getNhomDuocLyId());
+                    gd.setNhomHoatChatId(item.getNhomHoatChatId());
+                    gd.setNhomNganhHangId(item.getNhomNganhHangId());
+                    gd.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
+                    if(x.getIsModified()){
+                        //kiểm tra phiếu đó và update
+                        var gddb = giaoDichHangHoaRepository.findAllByMaPhieuChiTiet(x.getMaPhieuChiTiet());
+                        if(gddb != null){
+                            gd.setId(gddb.getId());
+                        }
                     }
+                    giaoDichHangHoas.add(gd);
+                }catch (Exception e){
+                    log.error(e.getMessage());
                 }
-                giaoDichHangHoas.add(gd);
             }
         });
         //xoá giao dịch cũ redis đi

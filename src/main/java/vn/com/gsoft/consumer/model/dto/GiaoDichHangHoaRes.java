@@ -5,7 +5,9 @@ import lombok.EqualsAndHashCode;
 import vn.com.gsoft.consumer.model.system.BaseRequest;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Locale;
 
 @Data
 public class GiaoDichHangHoaRes {
@@ -17,7 +19,7 @@ public class GiaoDichHangHoaRes {
     private BigDecimal soLuong;
     private BigDecimal gia;
     private Integer noteType;
-    private Date ngayGiaoDich;
+    private String ngayGiaoDich;
     private String maCoSo;
     private Integer maPhieuChiTiet;
     private Integer thuocIDCoSo;

@@ -8,7 +8,7 @@ import java.util.Date;
 @Data
 public class WrapData<T> {
     private String code;
-    private Date sendDate;
+    private String sendDate;
     private T data;
     private String bathKey;
     private Integer index;
