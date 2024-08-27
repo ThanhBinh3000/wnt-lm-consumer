@@ -17,6 +17,10 @@ import vn.com.gsoft.consumer.service.GiaoDichHangHoaService;
 import vn.com.gsoft.consumer.service.RedisListService;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -67,8 +71,12 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                     gd.setSoLuong(x.getSoLuong().multiply(item.getHeSo()));
                 }
                 try{
-                    SimpleDateFormat formatter=new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
-                    Date ngayGd =formatter.parse(x.getNgayGiaoDich());
+                    DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                    LocalDateTime dateTime = LocalDateTime.parse(x.getNgayGiaoDich(), formatter);
+                    ZonedDateTime zonedDateTime = dateTime.atZone(ZoneId.systemDefault());
+
+                    // Chuyển đổi ZonedDateTime sang Instant
+                    Date ngayGd = Date.from(zonedDateTime.toInstant());
                     gd.setNgayGiaoDich(ngayGd);
                     gd.setThuocId(x.getThuocId());
                     gd.setLoaiGiaoDich(x.getNoteType());
