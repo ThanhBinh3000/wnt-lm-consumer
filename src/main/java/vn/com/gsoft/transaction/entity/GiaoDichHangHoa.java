@@ -60,6 +60,8 @@ public class GiaoDichHangHoa extends BaseEntity {
     private Integer nhomNganhHangId;
     @Column(name = "MaPhieuChiTiet")
     private Integer maPhieuChiTiet;
+    @Column(name = "TenNhomNganhHang")
+    private String tenNhomNganhHang;
     @Transient
     @JsonIgnore
     private Boolean isModified;
