@@ -87,6 +87,7 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                     gd.setNhomHoatChatId(item.getNhomHoatChatId());
                     gd.setNhomNganhHangId(item.getNhomNganhHangId());
                     gd.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
+                    gd.setTenThuoc(item.getTenThuoc());
                     if(x.getIsModified()){
                         //kiểm tra phiếu đó và update
                         var gddb = giaoDichHangHoaRepository.findAllByMaPhieuChiTiet(x.getMaPhieuChiTiet());
