@@ -1,5 +1,6 @@
 package vn.com.gsoft.transaction.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -60,5 +61,6 @@ public class GiaoDichHangHoa extends BaseEntity {
     @Column(name = "MaPhieuChiTiet")
     private Integer maPhieuChiTiet;
     @Transient
+    @JsonIgnore
     private Boolean isModified;
 }
