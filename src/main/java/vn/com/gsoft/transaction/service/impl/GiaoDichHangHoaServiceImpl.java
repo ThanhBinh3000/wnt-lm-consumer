@@ -16,6 +16,8 @@ import vn.com.gsoft.transaction.repository.GiaoDichHangHoaRepository;
 import vn.com.gsoft.transaction.service.GiaoDichHangHoaService;
 import vn.com.gsoft.transaction.service.RedisListService;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -101,12 +103,13 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                 }
             }
         });
-        //xoá giao dịch cũ redis đi
-        if(giaoDichHangHoas.stream().filter(x->x.getIsModified() && !x.getDongBang()).isParallel()){
-            redisListService.deleteTransactions(giaoDichHangHoas.stream().filter(x->x.getIsModified() && !x.getDongBang()).toList());
-        }
         //lưu redis
-        redisListService.pushTransactionDataRedis(giaoDichHangHoas.stream().filter(x->!x.getDongBang()).toList());
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String pattern = "dd/MM/yyyy";
+        Date todayWithZeroTime = new Date();
+        DateFormat df = new SimpleDateFormat(pattern);
+        redisListService.pushTransactionDataRedis(giaoDichHangHoas.stream().filter(x->!x.getDongBang()).toList()
+                , "transaction-" + df.format(todayWithZeroTime));
         //lưu db
         giaoDichHangHoaRepository.saveAll(giaoDichHangHoas);
     }
