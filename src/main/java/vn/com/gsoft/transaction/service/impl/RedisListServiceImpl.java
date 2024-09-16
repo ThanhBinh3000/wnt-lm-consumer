@@ -1,10 +1,12 @@
 package vn.com.gsoft.transaction.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import vn.com.gsoft.transaction.constant.CachingConstant;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
+import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaCache;
 import vn.com.gsoft.transaction.service.RedisListService;
 
 import java.text.SimpleDateFormat;
@@ -14,13 +16,44 @@ import java.util.*;
 public class RedisListServiceImpl implements RedisListService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
-    public void pushTransactionDataRedis(List<GiaoDichHangHoa> giaoDichHangHoas) {
-        giaoDichHangHoas.forEach( x->{
-                    saveTransaction(x);
-                    pushDataRedis(x);
-        } );
+    public void pushTransactionDataRedis(List<GiaoDichHangHoa> giaoDichHangHoas, String key){
+        try {
+            if(redisTemplate.opsForHash().hasKey("transaction", key)){
+                // Lấy dữ liệu dưới dạng chuỗi JSON từ Redis Hash
+                String jsonData = (String) redisTemplate.opsForHash().get("transaction", key);
+
+                // Chuyển đổi JSON thành List<MyData>
+                List<GiaoDichHangHoaCache> data = objectMapper.readValue(jsonData, objectMapper.getTypeFactory().constructCollectionType(List.class, GiaoDichHangHoaCache.class));
+                giaoDichHangHoas.forEach(x->{
+                    var item = new GiaoDichHangHoaCache();
+                    item.setId(x.getId());
+                    item.setThuocId(x.getThuocId());
+                    item.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
+                    item.setMaCoSo(x.getMaCoSo());
+                    item.setGiaBan(x.getGiaBan());
+                    item.setGiaNhap(x.getGiaNhap());
+                    item.setSoLuong(x.getSoLuong());
+                    item.setLoaiGiaoDich(x.getLoaiGiaoDich());
+                    item.setNhomDuocLyId(x.getNhomDuocLyId());
+                    item.setNhomNganhHangId(x.getNhomNganhHangId());
+                    item.setNhomHoatChatId(x.getNhomHoatChatId());
+                    item.setNgayGiaoDich(x.getNgayGiaoDich());
+                    item.setTenThuoc(x.getTenThuoc());
+                    item.setTenDonVi(x.getTenDonVi());
+                    item.setTenNhomNganhHang(x.getTenNhomNganhHang());
+                    data.add(item);
+                });
+                redisTemplate.opsForHash().put("transaction", key,
+                    objectMapper.writeValueAsString(data));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void deleteTransactions(List<GiaoDichHangHoa> data) {
