@@ -13,6 +13,8 @@ public class GiaoDichHangHoaRes {
     private Integer nhomNganhHangId;
     private BigDecimal soLuong;
     private BigDecimal gia;
+    private BigDecimal giaBan;
+    private BigDecimal giaNhap;
     private Integer noteType;
     private String ngayGiaoDich;
     private String maCoSo;
@@ -20,4 +22,5 @@ public class GiaoDichHangHoaRes {
     private Integer thuocIDCoSo;
     private String tenDonVi;
     private Boolean isModified;
+    private BigDecimal tongBan;
 }

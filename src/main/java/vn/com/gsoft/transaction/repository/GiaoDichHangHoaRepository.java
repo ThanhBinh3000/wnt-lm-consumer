@@ -1,5 +1,6 @@
 package vn.com.gsoft.transaction.repository;
 
+import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,7 @@ import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHoa, GiaoDichHangHoaReq, Long> {
@@ -34,4 +36,22 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
 
     GiaoDichHangHoa findAllByMaPhieuChiTiet(Integer maPhieuChiTiet);
+    @Query(value = "DECLARE @query nvarchar(1024) =:query " +
+            "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    void updateData(@Param("query") String query);
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query " +
+            "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    List<Tuple> finByThuocId(@Param("query") String query);
+    //endregion
+
+    //check table có tồn tại không
+    @Query(value = "select c.name from LMNTDB.sys.tables c where" +
+            " 1=1 AND" +
+            " c.name = :tableName", nativeQuery = true)
+    Optional<Tuple> checkTableExit(@Param("tableName") String tableName);
 }

@@ -2,6 +2,7 @@ package vn.com.gsoft.transaction.service.impl;
 
 
 import com.google.gson.Gson;
+import jakarta.persistence.Tuple;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +91,9 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                     gd.setNhomNganhHangId(item.getNhomNganhHangId());
                     gd.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
                     gd.setTenThuoc(item.getTenThuoc());
+                    gd.setTongBan(x.getTongBan());
+                    gd.setGiaBan(x.getGiaBan());
+                    gd.setGiaNhap(x.getGiaNhap());
                     if(x.getIsModified()){
                         //kiểm tra phiếu đó và update
                         var gddb = giaoDichHangHoaRepository.findAllByMaPhieuChiTiet(x.getMaPhieuChiTiet());
@@ -97,20 +101,56 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                             gd.setId(gddb.getId());
                         }
                     }
-                    giaoDichHangHoas.add(gd);
+                    giaoDichHangHoaRepository.save(gd);
+                    if(!x.getIsModified() && x.getNoteType() == ENoteType.Delivery){
+                        var entityNameDate = "GiaoDichHangHoa_T" + dateTime.getMonthValue()+"_"+ dateTime.getYear();
+                        Optional<Tuple> table = giaoDichHangHoaRepository.checkTableExit(entityNameDate);
+                        //cộng dồn các ngày
+                        if(table.isPresent()){
+                            //kiểm tra tồn tại hàng hoá đó không
+                            var findByThuocIdByDateQuery = "Select * from "+ entityNameDate + " where thuocId =" + x.getThuocId();
+                            List<Tuple> itemByDate = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByDateQuery);
+                            if(itemByDate != null){
+                                var query = "Update "+ entityNameDate + " set tongBan = tongBan + " + gd.getTongBan() +
+                                        " Where thuocId = " + gd.getThuocId();
+                                giaoDichHangHoaRepository.updateData(query);
+                            }
+                        }
+                        var entityNameByMonth = "GiaoDichHangHoa_T0_"+ dateTime.getYear();
+                        //cộng dồn các tháng
+                        if(table.isPresent()){
+                            //kiểm tra tồn tại hàng hoá đó không
+                            var findByThuocIdByMonthQuery = "Select * from "+ entityNameByMonth + " where thuocId =" + x.getThuocId() +
+                                    " AND type in (" +dateTime.getMonthValue()+", 0)";
+                            List<Tuple> itemByDate = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByMonthQuery);
+                            if(itemByDate != null){
+                                var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan() +
+                                        " Where thuocId = " + gd.getThuocId() +  " AND type in (" +dateTime.getMonthValue()+", 0)";
+                                giaoDichHangHoaRepository.updateData(query);
+                            }
+                        }
+                        var entityNameByYear = "GiaoDichHangHoa_T0_0";
+                        //cộng dồn các tháng
+                        if(table.isPresent()){
+                            //kiểm tra tồn tại hàng hoá đó không
+                            var findByThuocIdByMonthQuery = "Select * from "+ entityNameByMonth + " where thuocId =" + x.getThuocId() +
+                                    " AND type in (" +dateTime.getYear()+", 0)";
+                            List<Tuple> itemByDate = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByMonthQuery);
+                            if(itemByDate != null){
+                                var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan() +
+                                        " Where thuocId = " + gd.getThuocId() +  " AND type in (" +dateTime.getYear()+", 0)";
+                                giaoDichHangHoaRepository.updateData(query);
+                            }
+                        }
+
+
+                    }
                 }catch (Exception e){
                     log.error(e.getMessage());
                 }
             }
         });
-        //lưu redis
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String pattern = "dd/MM/yyyy";
-        Date todayWithZeroTime = new Date();
-        DateFormat df = new SimpleDateFormat(pattern);
-        redisListService.pushTransactionDataRedis(giaoDichHangHoas.stream().filter(x->!x.getDongBang()).toList()
-                , "transaction-" + df.format(todayWithZeroTime));
         //lưu db
-        giaoDichHangHoaRepository.saveAll(giaoDichHangHoas);
+
     }
 }
