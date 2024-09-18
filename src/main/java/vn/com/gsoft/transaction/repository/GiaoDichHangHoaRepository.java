@@ -35,7 +35,7 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
 
-    GiaoDichHangHoa findAllByMaPhieuChiTiet(Integer maPhieuChiTiet);
+    GiaoDichHangHoa findAllByMaPhieuChiTietAndLoaiGiaoDich(Integer maPhieuChiTiet, Integer loaiGiaoDich);
     @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true
@@ -54,4 +54,10 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
             " 1=1 AND" +
             " c.name = :tableName", nativeQuery = true)
     Optional<Tuple> checkTableExit(@Param("tableName") String tableName);
+
+    @Query(value = "DECLARE @query nvarchar(1024) =:query " +
+            "exec sp_executesql @query"
+            , nativeQuery = true
+    )
+    void createTable(@Param("query") String query);
 }
