@@ -19,8 +19,11 @@ import vn.com.gsoft.transaction.service.GiaoDichHangHoaService;
 import vn.com.gsoft.transaction.service.RedisListService;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.ResultSet;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -60,17 +63,17 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
             if(item != null){
                 if(item.getTenDonViLe().toLowerCase().equals(x.getTenDonVi().toLowerCase())){
                     if(x.getNoteType().equals(ENoteType.Delivery)){
-                        gd.setGiaBan(x.getGia());
+                        gd.setGiaBan(x.getGiaBanCS());
 
                     }else {
-                        gd.setGiaNhap(x.getGia());
+                        gd.setGiaNhap(x.getGiaNhapCS());
                     }
                     gd.setSoLuong(x.getSoLuong());
                 }else {
                     if(x.getNoteType().equals(ENoteType.Delivery)){
-                        gd.setGiaBan(x.getGia().divide(item.getHeSo()));
+                        gd.setGiaBan(x.getGiaBanCS().divide(item.getHeSo()));
                     }else {
-                        gd.setGiaNhap(x.getGia().divide(item.getHeSo()));
+                        gd.setGiaNhap(x.getGiaNhapCS().divide(item.getHeSo()));
                     }
                     gd.setSoLuong(x.getSoLuong().multiply(item.getHeSo()));
                 }
@@ -81,6 +84,10 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
 
                     // Chuyển đổi ZonedDateTime sang Instant
                     Date ngayGd = Date.from(zonedDateTime.toInstant());
+
+                    SimpleDateFormat formatPattern = new SimpleDateFormat("yyyy/MM/dd");
+                    String formatDate = formatPattern.format(ngayGd);
+
                     gd.setNgayGiaoDich(ngayGd);
                     gd.setThuocId(x.getThuocId());
                     gd.setLoaiGiaoDich(x.getNoteType());
@@ -94,25 +101,28 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                     gd.setMaPhieuChiTiet(x.getMaPhieuChiTiet());
                     gd.setTenThuoc(item.getTenThuoc());
                     gd.setTongBan(x.getTongBan());
-                    gd.setGiaBan(x.getGiaBan());
-                    gd.setGiaNhap(x.getGiaNhap());
+                    if(x.getNoteType() == ENoteType.Delivery){
+                        gd.setGiaBanCS(x.getGiaBanCS());
+                        gd.setGiaNhapCS(x.getGiaNhapCS());
+                    }
                     BigDecimal giaCu = BigDecimal.ZERO;
                     BigDecimal slCu = BigDecimal.ZERO;
                     if(x.getIsModified()){
                         //kiểm tra phiếu đó và update
-                        var gddb = giaoDichHangHoaRepository.findAllByMaPhieuChiTietAndLoaiGiaoDich(x.getMaPhieuChiTiet(), x.getNoteType());
-                        if(gddb != null){
-                            gd.setId(gddb.getId());
-                            if(x.getNoteType() == ENoteType.Delivery){
-                                giaCu = gddb.getTongBan();
-                                slCu = gddb.getSoLuong();
-                            }
-                        }
+//                        var gddb = giaoDichHangHoaRepository.findByMaPhieuChiTietAndLoaiGiaoDich(x.getMaPhieuChiTiet(), x.getNoteType());
+//                        if(gddb != null){
+//                            gd.setId(gddb.get().getId());
+//                            if(x.getNoteType() == ENoteType.Delivery){
+//                                giaCu = gddb.get().getTongBan();
+//                                slCu = gddb.get().getSoLuong();
+//                            }
+//                        }
                     }
                     giaoDichHangHoaRepository.save(gd);
                     //kiểm tra dữ liệu hợp lệ không
-                    if(x.getGiaNhap().compareTo(BigDecimal.ZERO) > 0 && x.getGiaBan().compareTo(BigDecimal.ZERO) > 0
-                    && x.getGiaBan().divide(x.getGiaNhap()).compareTo(BigDecimal.valueOf(10)) <= 0)
+                    if(x.getNoteType() == ENoteType.Delivery && x.getGiaBanMinCS().compareTo(BigDecimal.ZERO) > 0
+                            && x.getGiaNhapMinCS().compareTo(BigDecimal.ZERO) > 0
+                            && x.getGiaBanMinCS().divide(x.getGiaNhapMinCS(), 2, RoundingMode.HALF_UP).compareTo(BigDecimal.valueOf(10)) <= 0)
                     {
                         if(!x.getIsModified() && x.getNoteType() == ENoteType.Delivery){
                             var entityNameDate = "GiaoDichHangHoa_T" + dateTime.getMonthValue()+"_"+ dateTime.getYear();
@@ -120,54 +130,74 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                             //cộng dồn các ngày
                             if(table.isEmpty()){
                                 giaoDichHangHoaRepository.createTable(createTable_T_ANY(entityNameDate));
-                                giaoDichHangHoaRepository.createTable(createIndex_T_ANY(entityNameDate));
+                                var index = createIndex_T_ANY(entityNameDate);
+                                giaoDichHangHoaRepository.createTable(index);
                                 //insert
-                                giaoDichHangHoaRepository.updateData(insert_T_ANY(entityNameDate, gd, dateTime));
+                                giaoDichHangHoaRepository.updateData(insert_T_ANY(entityNameDate, gd, formatDate.replace("/","")));
                             }else {
                                 //kiểm tra tồn tại hàng hoá đó không
-                                var findByThuocIdByDateQuery = "Select * from "+ entityNameDate + " where thuocId =" + x.getThuocId();
+                                var findByThuocIdByDateQuery = "Select * from "+ entityNameDate + " where thuocId =" + x.getThuocId() +
+                                        " AND ngayGiaoDich = '" + formatDate.replace("/","") + "'";
                                 List<Tuple> itemByDate = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByDateQuery);
-                                if(itemByDate != null){
-                                    var query = "Update "+ entityNameDate + " set tongBan = tongBan + " + gd.getTongBan().subtract(giaCu) +
-                                            " , tongSoLuong = " + gd.getSoLuong().subtract(slCu) +
-                                            " Where id = " + gd.getThuocId() + " AND ngayGiaoDich = " + dateTime ;
+                                if(itemByDate.size() > 0){
+                                    var query = "Update "+ entityNameDate + " set tongBan = tongBan + " + gd.getTongBan().add(giaCu) +
+                                            " , tongSoLuong = " + gd.getSoLuong().add(slCu) +
+                                            " Where thuocId = " + gd.getThuocId() +
+                                            " AND ngayGiaoDich = '" + formatDate.replace("/","") + "'";
                                     giaoDichHangHoaRepository.updateData(query);
+                                }else{
+                                    var query = insert_T_ANY(entityNameDate, gd, formatDate.replace("/",""));
+                                    var result = giaoDichHangHoaRepository.updateData(query);
                                 }
                             }
 
 
                             var entityNameByMonth = "GiaoDichHangHoa_T0_"+ dateTime.getYear();
+                            Optional<Tuple> tableMonth = giaoDichHangHoaRepository.checkTableExit(entityNameByMonth);
                             //cộng dồn các tháng
-                            if(table.isEmpty()){
-                                giaoDichHangHoaRepository.createTable(createTable_T_ANY(entityNameByMonth));
-                                giaoDichHangHoaRepository.createTable(createIndex_T_ANY(entityNameByMonth));
+                            if(tableMonth.isEmpty()){
+                                giaoDichHangHoaRepository.createTable(createTable_T_0(entityNameByMonth));
+                                giaoDichHangHoaRepository.createTable(createIndex_T_0(entityNameByMonth));
+                                //insert
+                                giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByMonth, gd, dateTime.getMonthValue()));
+                                giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByMonth, gd, 0));
                             }else {
                                 //kiểm tra tồn tại hàng hoá đó không
                                 var findByThuocIdByMonthQuery = "Select * from "+ entityNameByMonth + " where thuocId =" + x.getThuocId() +
                                         " AND type in (" +dateTime.getMonthValue()+", 0)";
                                 List<Tuple> itemByMonth = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByMonthQuery);
-                                if(itemByMonth != null){
-                                    var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan().subtract(giaCu) +
-                                            " , tongSoLuong = " + gd.getSoLuong().subtract(slCu) +
+                                if(itemByMonth.size() > 0){
+                                    var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan().add(giaCu) +
+                                            " , tongSoLuong = " + gd.getSoLuong().add(slCu) +
                                             " Where thuocId = " + gd.getThuocId() +  " AND type in (" +dateTime.getMonthValue()+", 0)";
-                                    giaoDichHangHoaRepository.updateData(query);
+                                    var result = giaoDichHangHoaRepository.updateData(query);
+                                }else {
+                                    giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByMonth, gd, dateTime.getMonthValue()));
+                                    giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByMonth, gd, 0));
                                 }
                             }
 
                             var entityNameByYear = "GiaoDichHangHoa_T0_0";
+                            Optional<Tuple> tableYear = giaoDichHangHoaRepository.checkTableExit(entityNameByYear);
                             //cộng dồn các tháng
-                            if(table.isEmpty()){
-                                giaoDichHangHoaRepository.createTable(createTable_T_ANY(entityNameByYear));
-                                giaoDichHangHoaRepository.createTable(createIndex_T_ANY(entityNameByYear));
+                            if(tableYear.isEmpty()){
+                                giaoDichHangHoaRepository.createTable(createTable_T_0(entityNameByYear));
+                                giaoDichHangHoaRepository.createTable(createIndex_T_0(entityNameByYear));
+                                //insert
+                                giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByYear, gd, dateTime.getYear()));
+                                giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByYear, gd, 0));
                             }else {
                                 var findByThuocIdByYearQuery = "Select * from "+ entityNameByMonth + " where thuocId =" + x.getThuocId() +
                                         " AND type in (" +dateTime.getYear()+", 0)";
                                 List<Tuple> itemByYear = giaoDichHangHoaRepository.finByThuocId(findByThuocIdByYearQuery);
                                 if(itemByYear != null){
-                                    var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan().subtract(giaCu) +
-                                            " , tongSoLuong = " + gd.getSoLuong().subtract(slCu) +
+                                    var query = "Update "+ entityNameByMonth + " set tongBan = tongBan + " + gd.getTongBan().add(giaCu) +
+                                            " , tongSoLuong = " + gd.getSoLuong().add(slCu) +
                                             " Where thuocId = " + gd.getThuocId() +  " AND type in (" +dateTime.getYear()+", 0)";
                                     giaoDichHangHoaRepository.updateData(query);
+                                }else {
+                                    giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByYear, gd, dateTime.getYear()));
+                                    giaoDichHangHoaRepository.updateData(insert_T_0(entityNameByYear, gd, 0));
                                 }
                             }
                             //tính giá tb
@@ -236,11 +266,12 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                 "[GNMin] [decimal](18, 0) NULL, " +
                 "[GNMax] [decimal](18, 0) NULL, " +
                 "[GBMin] [decimal](18, 0) NULL, " +
-                "[GBMax] [decimal](18, 0) NULL )";
+                "[GBMax] [decimal](18, 0) NULL," +
+                "type int NULL )";
     }
 
     private String createIndex_T_ANY(String entityName){
-        return "CREATE NONCLUSTERED INDEX [ThuocId_NgayIndex-20240911-231623] ON " + entityName +
+        return "CREATE NONCLUSTERED INDEX [ThuocId_NgayIndex] ON " + entityName +
                 " ("+
         "[ThuocId] ASC, "+
                 "[NgayGiaoDich] ASC "+
@@ -248,7 +279,7 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
     }
 
     private String createIndex_T_0(String entityName){
-        return "CREATE NONCLUSTERED INDEX [Type_Thuoc_IdIndex-20240912-160604] ON " + entityName +
+        return "CREATE NONCLUSTERED INDEX [Type_Thuoc_IdIndex] ON " + entityName +
                 " ( "+
                 "[ThuocId] ASC," +
                 "[Type] ASC "+
@@ -257,7 +288,7 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
 
     }
 
-    private String insert_T_ANY(String entityName, GiaoDichHangHoa gd , LocalDateTime date){
+    private String insert_T_ANY(String entityName, GiaoDichHangHoa gd , String date){
         return "INSERT INTO  "+ entityName +
                 " ([ThuocId] "+
                 ",[TenThuoc] "+
@@ -269,19 +300,19 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                 ",[NhomHoatChatId] "+
                 ",[NhomNganhHangId] "+
                 ",[TenNhomNganhHang] "+
-//                ",[GiaBanCS] "+
-//                ",[GiaNhapCS] "+
-//                ",[GNMin] "+
-//                ",[GNMax] "+
-//                ",[GBMin] "+
-//                ",[GBMax])"+
-                "VALUES ("+gd.getThuocId()+", "+gd.getTenThuoc()+", "+gd.getNhomDuocLyId()+", "+gd.getSoLuong()+", "+gd.getTongBan() +
-                "," + gd.getTenDonVi() + "," + date + "," + gd.getNhomHoatChatId() + "," + gd.getNhomNganhHangId() +
-                "," + gd.getTenNhomNganhHang()
-                        +")";
+                ",[GiaBanCS] "+
+                ",[GiaNhapCS] "+
+                ",[GNMin] "+
+                ",[GNMax] "+
+                ",[GBMin] "+
+                ",[GBMax])"+
+                "VALUES ("+gd.getThuocId()+", N'"+gd.getTenThuoc()+"', "+gd.getNhomDuocLyId()+", "+gd.getSoLuong()+", "+gd.getTongBan() +
+                ",N'" + gd.getTenDonVi() + "','" + date + "'," + gd.getNhomHoatChatId() + "," + gd.getNhomNganhHangId() +
+                ",N'" + gd.getTenNhomNganhHang() + "'," + gd.getGiaBanCS() + "," + gd.getGiaNhapCS() + "," + gd.getGiaNhap()
+                + "," + gd.getGiaNhap() + "," + gd.getGiaBan() + "," + gd.getGiaBan() +")";
     }
 
-    private String insert_T_0(String entityName, GiaoDichHangHoa gd){
+    private String insert_T_0(String entityName, GiaoDichHangHoa gd, int type){
         return "INSERT INTO  "+ entityName +
                 " ([ThuocId] "+
                 ",[TenThuoc] "+
@@ -292,15 +323,17 @@ public class GiaoDichHangHoaServiceImpl implements GiaoDichHangHoaService {
                 ",[NhomHoatChatId] "+
                 ",[NhomNganhHangId] "+
                 ",[TenNhomNganhHang] "+
-//                ",[GiaBanCS] "+
-//                ",[GiaNhapCS] "+
-//                ",[GNMin] "+
-//                ",[GNMax] "+
-//                ",[GBMin] "+
-//                ",[GBMax])"+
-                "VALUES ("+gd.getThuocId()+", "+gd.getTenThuoc()+", "+gd.getNhomDuocLyId()+", "+gd.getSoLuong()+", "+gd.getTongBan() +
-                "," + gd.getTenDonVi() + "," + gd.getNhomHoatChatId() + "," + gd.getNhomNganhHangId() +
-                "," + gd.getTenNhomNganhHang()
-                +")";
+                ",[GiaBanCS] "+
+                ",[GiaNhapCS] "+
+                ",[GNMin] "+
+                ",[GNMax] "+
+                ",[GBMin] "+
+                ",[GBMax]," +
+                "type)"+
+                "VALUES ("+gd.getThuocId()+", N'"+gd.getTenThuoc()+"', "+gd.getNhomDuocLyId()+", "+gd.getSoLuong()+", "+gd.getTongBan() +
+                ",N'" + gd.getTenDonVi() + "'," + gd.getNhomHoatChatId() + "," + gd.getNhomNganhHangId() +
+                ",N'" + gd.getTenNhomNganhHang() + "'," + gd.getGiaBanCS() + "," + gd.getGiaNhapCS() + "," + gd.getGiaNhap()
+                + "," + gd.getGiaNhap() + "," + gd.getGiaBan() + "," + gd.getGiaBan()
+                +"," + type + ")";
     }
 }

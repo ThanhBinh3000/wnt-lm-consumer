@@ -1,14 +1,17 @@
 package vn.com.gsoft.transaction.repository;
 
 import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.com.gsoft.transaction.entity.GiaoDichHangHoa;
 import vn.com.gsoft.transaction.model.dto.GiaoDichHangHoaReq;
 
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,12 +38,14 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
 
-    GiaoDichHangHoa findAllByMaPhieuChiTietAndLoaiGiaoDich(Integer maPhieuChiTiet, Integer loaiGiaoDich);
+    @Modifying
+    @Transactional
+    //Optional<GiaoDichHangHoa> findByMaPhieuChiTietAndLoaiGiaoDich(Integer maPhieuChiTiet, Integer loaiGiaoDich);
     @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true
     )
-    void updateData(@Param("query") String query);
+    int updateData(@Param("query") String query);
 
     @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
@@ -50,14 +55,16 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     //endregion
 
     //check table có tồn tại không
-    @Query(value = "select c.name from LMNTDB.sys.tables c where" +
+    @Query(value = "select c.name from LienMinhNTDB.sys.tables c where" +
             " 1=1 AND" +
             " c.name = :tableName", nativeQuery = true)
     Optional<Tuple> checkTableExit(@Param("tableName") String tableName);
 
+    @Modifying
+    @Transactional
     @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true
     )
-    void createTable(@Param("query") String query);
+    int createTable(@Param("query") String query);
 }

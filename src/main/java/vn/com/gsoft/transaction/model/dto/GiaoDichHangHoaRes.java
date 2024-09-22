@@ -3,6 +3,7 @@ package vn.com.gsoft.transaction.model.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Data
 public class GiaoDichHangHoaRes {
@@ -12,9 +13,8 @@ public class GiaoDichHangHoaRes {
     private Integer nhomHoatChatId;
     private Integer nhomNganhHangId;
     private BigDecimal soLuong;
-    private BigDecimal gia;
-    private BigDecimal giaBan;
-    private BigDecimal giaNhap;
+    private BigDecimal giaBanCS;
+    private BigDecimal giaNhapCS;
     private Integer noteType;
     private String ngayGiaoDich;
     private String maCoSo;
@@ -23,4 +23,6 @@ public class GiaoDichHangHoaRes {
     private String tenDonVi;
     private Boolean isModified;
     private BigDecimal tongBan;
+    private BigDecimal giaBanMinCS;
+    private BigDecimal giaNhapMinCS;
 }
