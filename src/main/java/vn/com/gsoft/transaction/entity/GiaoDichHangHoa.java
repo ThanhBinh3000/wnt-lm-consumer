@@ -47,7 +47,7 @@ public class GiaoDichHangHoa extends BaseEntity {
     @Column(name = "DongBang")
     private Boolean dongBang;
     @Column(name = "LoaiGiaoDich")
-    private Integer LoaiGiaoDich;
+    private Integer loaiGiaoDich;
     @Column(name = "MaCoSo")
     private String maCoSo;
     @Column(name = "SoLuongQuyDoi")
@@ -62,6 +62,16 @@ public class GiaoDichHangHoa extends BaseEntity {
     private Integer maPhieuChiTiet;
     @Column(name = "TenNhomNganhHang")
     private String tenNhomNganhHang;
+    @Column(name = "TongBanVoiGiaNhap")
+    private BigDecimal tongBanVoiGiaNhap;
+    @Column(name = "TongBan")
+    private BigDecimal tongBan;
+    @Column(name = "TSLN")
+    private BigDecimal tsln;
+    @Column(name = "GiaNhapCS")
+    private BigDecimal giaNhapCS;
+    @Column(name = "GiaBanCS")
+    private BigDecimal giaBanCS;
     @Transient
     @JsonIgnore
     private Boolean isModified;
