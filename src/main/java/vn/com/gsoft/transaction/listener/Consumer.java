@@ -18,6 +18,7 @@ import vn.com.gsoft.transaction.model.system.WrapData;
 import vn.com.gsoft.transaction.repository.ProcessDtlRepository;
 import vn.com.gsoft.transaction.repository.ProcessRepository;
 import vn.com.gsoft.transaction.service.GiaoDichHangHoaService;
+import vn.com.gsoft.transaction.service.NhaThuocsService;
 
 import java.time.*;
 import java.util.Date;
@@ -35,9 +36,13 @@ public class Consumer {
     private ProcessRepository processRepository;
     @Autowired
     private ProcessDtlRepository processDtlRepository;
+    @Autowired
+    private NhaThuocsService nhaThuocsService;
 
 
-    @KafkaListener(topics = "#{'${wnt.kafka.internal.producer.topic.baocao}'}", groupId = "#{'${wnt.kafka.internal.consumer.group-id}'}", containerFactory = "kafkaInternalListenerContainerFactory")
+    @KafkaListener(topics = "#{'${wnt.kafka.internal.producer.topic.baocao}', '${wnt.kafka.internal.producer.topic.info}'}",
+            groupId = "#{'${wnt.kafka.internal.consumer.group-id}', '${wnt.kafka.internal.consumer.group-id-info}'}",
+            containerFactory = "kafkaInternalListenerContainerFactory")
     public void receiveExternal(@Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                 @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partitionId,
                                 @Header(KafkaHeaders.OFFSET) Long offset,
@@ -77,6 +82,9 @@ public class Consumer {
                     giaoDichHangHoaService.saveData(payload);
                     break;
                 case JobConstant.THONG_BAO:
+                    break;
+                case JobConstant.CAP_NHAT_THANH_VIEN:
+                    nhaThuocsService.updateData(payload);
                     break;
                 default:
                     log.error("Mã code chưa đuược cấu hình");

@@ -38,9 +38,9 @@ public interface GiaoDichHangHoaRepository extends BaseRepository<GiaoDichHangHo
     )
     List<GiaoDichHangHoa> searchList(@Param("param") GiaoDichHangHoaReq param);
 
+    Optional<GiaoDichHangHoa> findByMaPhieuChiTietAndLoaiGiaoDich(Integer maPhieuChiTiet, Integer loaiGiaoDich);
     @Modifying
     @Transactional
-    //Optional<GiaoDichHangHoa> findByMaPhieuChiTietAndLoaiGiaoDich(Integer maPhieuChiTiet, Integer loaiGiaoDich);
     @Query(value = "DECLARE @query nvarchar(1024) =:query " +
             "exec sp_executesql @query"
             , nativeQuery = true

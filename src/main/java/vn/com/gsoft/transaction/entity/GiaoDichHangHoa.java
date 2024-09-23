@@ -47,7 +47,7 @@ public class GiaoDichHangHoa extends BaseEntity {
     @Column(name = "DongBang")
     private Boolean dongBang;
     @Column(name = "LoaiGiaoDich")
-    private Integer LoaiGiaoDich;
+    private Integer loaiGiaoDich;
     @Column(name = "MaCoSo")
     private String maCoSo;
     @Column(name = "SoLuongQuyDoi")
