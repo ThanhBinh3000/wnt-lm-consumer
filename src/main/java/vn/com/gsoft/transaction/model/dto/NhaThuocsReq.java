@@ -7,9 +7,8 @@ import vn.com.gsoft.transaction.model.system.BaseRequest;
 
 import java.util.Date;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class NhaThuocsReq extends BaseRequest {
+public class NhaThuocsReq {
     private String maNhaThuoc;
     private String tenNhaThuoc;
     private String diaChi;
@@ -34,5 +33,5 @@ public class NhaThuocsReq extends BaseRequest {
     private Integer type;
     private String fullName;
     private Integer userId;
-    private Integer typeUpdate;
+    private Integer action;
 }

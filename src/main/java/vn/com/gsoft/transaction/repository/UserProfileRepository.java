@@ -27,12 +27,5 @@ public interface UserProfileRepository extends BaseRepository<UserProfile, UserP
     )
     List<UserProfile> searchList(@Param("param") UserProfileReq param);
 
-    @Query(value =
-            "SELECT  up.id as id, up.UserName as userName, up.SoDienThoai AS soDienThoai , nv.Role AS role, " +
-                    "  up.Email as email, up.HoatDong as hoatDong, up.TenDayDu as tenDayDu " +
-                    "FROM UserProfile up " +
-                    " WHERE 1 = 1" + " ORDER BY up.id desc", nativeQuery = true
-    )
-
-    Optional<Tuple> findByUserId(Integer userId);
+    Optional<UserProfile> findByUserId(Integer userId);
 }

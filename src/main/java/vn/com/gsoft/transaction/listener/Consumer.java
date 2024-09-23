@@ -40,8 +40,8 @@ public class Consumer {
     private NhaThuocsService nhaThuocsService;
 
 
-    @KafkaListener(topics = "#{'${wnt.kafka.internal.producer.topic.baocao}', '${wnt.kafka.internal.producer.topic.info}'}",
-            groupId = "#{'${wnt.kafka.internal.consumer.group-id}', '${wnt.kafka.internal.consumer.group-id-info}'}",
+    @KafkaListener(topics = "#{'${wnt.kafka.internal.producer.topic.baocao}'}",
+            groupId = "#{'${wnt.kafka.internal.consumer.group-id}'}",
             containerFactory = "kafkaInternalListenerContainerFactory")
     public void receiveExternal(@Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                 @Header(KafkaHeaders.RECEIVED_PARTITION) Integer partitionId,
