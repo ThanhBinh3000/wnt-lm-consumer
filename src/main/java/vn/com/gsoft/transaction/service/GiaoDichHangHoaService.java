@@ -7,5 +7,5 @@ import java.util.List;
 public interface GiaoDichHangHoaService {
 
     void saveData(String playLoad);
-    void saveAllData(List<GiaoDichHangHoaRes> items);
+    void deleteData(String payload);
 }
