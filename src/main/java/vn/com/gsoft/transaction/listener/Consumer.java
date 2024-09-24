@@ -86,6 +86,9 @@ public class Consumer {
                 case JobConstant.CAP_NHAT_THANH_VIEN:
                     nhaThuocsService.updateData(payload);
                     break;
+                case JobConstant.DELETE_PHIEU:
+                    giaoDichHangHoaService.deleteData(payload);
+                    break;
                 default:
                     log.error("Mã code chưa đuược cấu hình");
             }
